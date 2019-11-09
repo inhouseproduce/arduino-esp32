@@ -9,10 +9,10 @@
 #include <NTPClient.h>
 #include <ESP8266HTTPClient.h>
 
-const char* ssid = "inHouseTest1";
-const char* password = "nasturtium";
+const char* ssid = "inHouse";
+const char* password = "ilovehugos";
 
-const String postAddress = "http://10.39.242.79:3000/germination";
+const String postAddress = "http://raspberrypi.local:3000/germination";
 
 // Enables ntp server for time and date
 WiFiUDP ntpUDP;
