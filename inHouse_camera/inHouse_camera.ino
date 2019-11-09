@@ -8,8 +8,8 @@
 
 #include "camera_pins.h"
 
-const char* ssid = "ssid";
-const char* password = "password";
+const char* ssid = "inHouseTest1";
+const char* password = "nasturtium";
 
 
 void startCameraServer();
