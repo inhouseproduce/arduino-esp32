@@ -1,13 +1,45 @@
+#define CAMERA_MODEL_AI_THINKER
+//#define CAMERA_MODEL_M5STACK_NO_PSRAM
+
 #include "esp_camera.h"
 #include <WiFi.h>
 #include <ESPmDNS.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
+
+//
+#include "Arduino.h"
+#include "fb_gfx.h"
+#include "fd_forward.h"
+#include "fr_forward.h"
+#include "FS.h"                // SD Card ESP32
+#include "SD_MMC.h"            // SD Card ESP32
+#include "soc/soc.h"           // Disable brownour problems
+#include "soc/rtc_cntl_reg.h"  // Disable brownour problems
+//#include "dl_lib.h"
+#include "driver/rtc_io.h"
+#include <EEPROM.h>            // read and write from flash memory
+#define EEPROM_SIZE 1
+int pictureNumber = 0;
+
+#include <iostream>
+//#include <math.h>
+#include <vector>
+//#include <base64.h>
+#include <string>
+#include "base64.hpp"
+
+//
+
+#include <HTTPClient.h>
+
 #define CAMERA_MODEL_AI_THINKER
 #include "camera_pins.h"
 #define uS_TO_S_FACTOR 1000000  // Conversion factor for micro seconds to seconds */
 #define TIME_TO_SLEEP  5        // Time ESP32 will go to sleep (in seconds) */
+
+String macA;
 
 // esp32 number denoting position
 const int number = 1;
@@ -28,8 +60,11 @@ int awoke;
 // When the 32 will turn on next
 int sleepAlarm;
 
-const char* ssid = "***";
-const char* password = "***";
+const char* ssid = "inHouseTest1";
+const char* password = "nasturtium";
+
+const String postAddress = "http://10.39.242.79:3000/camera/";
+//const String postAddress = "/camera/";
 
 WiFiUDP ntpUDP;
 
@@ -42,10 +77,19 @@ void startCameraServer();
 
 IPAddress ip;
 
+struct photo {
+  uint8_t* buff;
+  String mac;
+  photo(uint8_t* b, String m) {
+    buff = b;
+    mac = m;
+  }
+};
+
 void OTA() {
   ArduinoOTA.handle();
   if (WiFi.status() == WL_CONNECTED) {
-    //Serial.println("connection strong");
+    Serial.println("connection strong");
   } else {
     Serial.println("connection lost");
     while (WiFi.status() != WL_CONNECTED) {
@@ -65,8 +109,34 @@ void OTA() {
   delay(500);
 }
 
+void postProtocol() {
+  Serial.println("Sending");
+  if(WiFi.status()== WL_CONNECTED){   //Check WiFi connection status
+ 
+   HTTPClient http;    //Declare object of class HTTPClient
+   http.begin(postAddress);      //Specify request destination
+   http.addHeader("Content-Type", "application/json");  //Specify content-type header
+
+   //Serial.println(macA + " " +WiFi.localIP());
+
+   int httpCode = http.POST("{\"id\": \"" + macA + "\", \"address\": \"" + WiFi.localIP() + "\"}");   //Send the request
+   //int httpCode = http.POST("{\"address\": \"" + ip +"\"}");   //Send the request
+   String payload = http.getString();                  //Get the response payload
+
+   //Serial.println(httpCode);   //Print HTTP return code
+   Serial.println(payload);    //Print request response payload
+ 
+   http.end();  //Close connection
+ }else{
+    Serial.println("Error in WiFi connection"); 
+ }
+}
+
+/////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial.setDebugOutput(true);
   Serial.println();
 
@@ -97,6 +167,7 @@ void setup() {
   config.pixel_format = PIXFORMAT_JPEG;
   //config.pixel_format = PIXFORMAT_RAW;
   //init with high specs to pre-allocate larger buffers
+  
   Serial.printf("psramFound(): ",psramFound());
   if(psramFound()){
     config.frame_size = FRAMESIZE_UXGA;
@@ -151,6 +222,7 @@ void setup() {
   Serial.print("Camera Ready! Use 'http://");
   Serial.print(WiFi.localIP());
   Serial.println("' to connect");
+  macA = WiFi.macAddress();
 
   ///////////////////////////////////////////////
   ArduinoOTA
@@ -199,17 +271,214 @@ void setup() {
     start = awoke + cycleLength;
   }
   sleepAlarm = start + stagger;
+
+  capture();
 }
 
 void loop() {
   OTA();
   timeClient.update();
   currentTime = timeClient.getEpochTime();
-  Serial.println(currentTime);
-  if(currentTime > awoke + intervalOn) {
-    Serial.println("Good Night!");
-    esp_sleep_enable_timer_wakeup((sleepAlarm - currentTime) * uS_TO_S_FACTOR);
-    esp_deep_sleep_start();
-  }
+  //Serial.println(currentTime);
+//  if(currentTime > awoke + intervalOn) {
+//    Serial.println("Good Night!");
+//    esp_sleep_enable_timer_wakeup((sleepAlarm - currentTime) * uS_TO_S_FACTOR);
+//    esp_deep_sleep_start();
+//  }
+  //postProtocol();
+  //Serial.println(number);
   delay(500);
+}
+
+
+// Code used to capture the immage will throw an error
+// if no sd card is detected. If sd card is present but
+// errors persist reformat the card. If images are
+// unnesesary, comment out relative code.
+void capture() {
+  //Serial.println("Starting SD Card");
+  if(!SD_MMC.begin()){
+    Serial.println("SD Card Mount Failed");
+    return;
+  }
+  
+  uint8_t cardType = SD_MMC.cardType();
+  if(cardType == CARD_NONE){
+    Serial.println("No SD Card attached");
+    return;
+  }
+    
+  camera_fb_t * fb = NULL;
+  
+  // Take Picture with Camera
+  fb = esp_camera_fb_get();  
+  if(!fb) {
+    Serial.println("Camera capture failed");
+    return;
+  }
+  // initialize EEPROM with predefined size
+  EEPROM.begin(EEPROM_SIZE);
+  pictureNumber = EEPROM.read(0) + 1;
+
+  // Path where new picture will be saved in SD Card
+  String path = "/picture" + String(pictureNumber) +".jpg";
+
+  fs::FS &fs = SD_MMC; 
+  Serial.printf("Picture file name: %s\n", path.c_str());
+  
+  File file = fs.open(path.c_str(), FILE_WRITE);
+  if(!file){
+    Serial.println("Failed to open file in writing mode");
+  } 
+  else {
+    file.write(fb->buf, fb->len); // payload (image), payload length
+    Serial.printf("Saved file to path: %s\n", path.c_str());
+    EEPROM.write(0, pictureNumber);
+    EEPROM.commit();
+  }
+
+  file.close();
+  
+  postPic(fb);
+  
+  esp_camera_fb_return(fb); 
+  
+  // Turns off the ESP32-CAM white on-board LED (flash) connected to GPIO 4
+  pinMode(4, OUTPUT);
+  digitalWrite(4, LOW);
+  rtc_gpio_hold_en(GPIO_NUM_4);
+  
+  delay(2000);
+  Serial.println("Going to sleep now");
+  delay(2000);
+  esp_deep_sleep_start();
+  Serial.println("This will never be printed");
+}
+
+// Code to perform http post on the immage.
+// Currently attempting to post as both
+// a String and Byte array.
+void postPic(camera_fb_t * fb) {
+  //Serial.println(fb->len);
+  //Serial.println(encode64(fb->buf, fb->len - 1).c_str());
+  Serial.println("break");
+  //encode64(fb->buf, fb->len);
+  //std::cout << encode64(fb->buf, fb->len) << std::endl;
+  Serial.println("break");
+  t(fb);
+  //Serial.println(encode64(fb->buf, fb->len));
+  Serial.println("break");
+  //Serial.println(encode64(fb->buf, fb->len + 1).c_str());
+  Serial.println("Sending");
+  if(WiFi.status()== WL_CONNECTED){   //Check WiFi connection status
+ 
+   HTTPClient http;    //Declare object of class HTTPClient
+   http.begin(postAddress);      //Specify request destination
+   //http.addHeader("Content-Type", "image/jpeg");  //Specify content-type header
+   http.addHeader("Content-Type", "application/json");  //Specify content-type header
+
+   ////photo p = photo(fb->buf, macA);
+  
+   //int httpCode = http.POST(reinterpret_cast <const char*> (fb->buf));   // payload (image), payload length
+   int httpCode = http.POST("{\"id\": \"" + macA + "\", \"image\": \"" + reinterpret_cast <const char*> (fb->buf) + "\"}");
+   String payload = http.getString();                  //Get the response payload
+
+   Serial.println(httpCode);   //Print HTTP return code
+   //Serial.println(fb->buf);
+   Serial.println(payload);    //Print request response payload
+ 
+   http.end();  //Close connection
+ }else{
+    Serial.println("Error in WiFi connection"); 
+ }
+}
+
+//////////////////////////////////
+static const std::string base64_chars = 
+             "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+             "abcdefghijklmnopqrstuvwxyz"
+             "0123456789+/";
+
+
+static inline bool is_base64(unsigned char c) {
+  return (isalnum(c) || (c == '+') || (c == '/'));
+}
+
+// Code to encode image data as base64 code.
+// Confirm functionality by printing the coded string
+// and translating it back to an immage with:
+// https://base64.guru/converter/decode/image
+// So far String outputed does convert image completly.
+// Unsure if error lies in encode64 or elsewhere.
+
+String encode64(unsigned char const* bytes_to_encode, unsigned int in_len) {
+//  String encoded_png;
+//  //Mat img; // Load an image here
+//  
+//  std::vector<unsigned char> buf;
+//  //cv::imencode(".png", fb, buf);
+//  auto base64_png = reinterpret_cast<const unsigned char*>(buf.data());
+//  encoded_png = "data:image/jpeg;base64," + base64_encode(base64_png, buf.size());
+  
+//  String toEncode = "Test encoding";
+// 
+//  String encoded = base64::encode(fb->buf);
+// 
+//  Serial.println(encoded);
+
+  String ret;
+  int i = 0;
+  int j = 0;
+  unsigned char char_array_3[3];
+  unsigned char char_array_4[4];
+
+  while (in_len--) {
+    char_array_3[i++] = *(bytes_to_encode++);
+    if (i == 3) {
+      char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+      char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+      char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+      char_array_4[3] = char_array_3[2] & 0x3f;
+
+      for(i = 0; (i <4) ; i++)
+        ret += base64_chars[char_array_4[i]];
+        //Serial.print("" + base64_chars[char_array_4[i]]);
+        //std::cout << base64_chars[char_array_4[i]]);
+      i = 0;
+    }
+  }
+
+  if (i)
+  {
+    for(j = i; j < 3; j++)
+      char_array_3[j] = '\0';
+
+    char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+    char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+    char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+    char_array_4[3] = char_array_3[2] & 0x3f;
+
+    for (j = 0; (j < i + 1); j++)
+      ret += base64_chars[char_array_4[j]];
+      //Serial.print("" + base64_chars[char_array_4[j]]);
+      //std::cout << base64_chars[char_array_4[j]];
+
+    while((i++ < 3))
+      ret += '=';
+      //Serial.print("" + '=');
+      //std::cout << '=';
+
+  }
+  //Serial.println("out");
+  return ret;
+}
+
+
+//Attemp to get base64 string from image data by using recasting the data bytes beforehand.
+#include <inttypes.h>
+void t(camera_fb_t * fb) {
+  //std::vector<uchar> buf;
+  //cv::imencode(".jpg", img, buf);
+  auto *enc_msg = reinterpret_cast<unsigned char*>(fb->buf);
+  Serial.println(encode64(enc_msg, fb->len));
 }
