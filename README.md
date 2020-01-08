@@ -1,3 +1,16 @@
+## Development
+
+# Push file to esp
+    ampy --port /dev/tty.usbserial-A50285BI put boot.py
+
+# Run the file (Local)
+    ampy --port /dev/tty.usbserial-A50285BI run boot.py
+
+# Direct shell
+    miniterm.py /dev/tty.usbserial-A50285BI 115200 --dtr 0
+
+
+
 ## From Scratch
 
 ## Tools
@@ -68,3 +81,5 @@
 ## Installation
     cd $MICROPYTHON/arduino-esp32/ports/esp32
     make deploy
+
+
