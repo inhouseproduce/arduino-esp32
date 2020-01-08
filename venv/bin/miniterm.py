@@ -1,4 +1,4 @@
-#!/Users/eduardjacobs/Desktop/py/venv/bin/python3.7
+#!/Users/eduardjacobs/Desktop/arduino-esp32/venv/bin/python3.7
 #
 # Very simple serial terminal
 #

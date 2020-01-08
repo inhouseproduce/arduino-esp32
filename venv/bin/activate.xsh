@@ -28,7 +28,7 @@ def _deactivate(args):
 _deactivate(["nondestructive"])
 aliases["deactivate"] = _deactivate
 
-$VIRTUAL_ENV = r"/Users/eduardjacobs/Desktop/py/venv"
+$VIRTUAL_ENV = r"/Users/eduardjacobs/Desktop/arduino-esp32/venv"
 
 $_OLD_VIRTUAL_PATH = $PATH
 $PATH = $PATH[:]
