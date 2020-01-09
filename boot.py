@@ -6,10 +6,8 @@ esp.osdebug(None)
 import gc
 gc.collect()
 
-import test
-
-ssid = 'edoanna'
-password = 'edo111792'
+ssid = 'TP-Link_33C4'
+password = 'nasturtium'
 
 station = network.WLAN(network.STA_IF)
 

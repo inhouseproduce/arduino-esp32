@@ -1,5 +1,13 @@
 ## Development
 
+# Erase flash
+    esptool.py --port /dev/tty.usbserial-A50285BI --baud 115200 erase_flash
+    
+# Flash esp32
+    cd $MICROPYTHON/micropython/ports/esp32
+    make V=1 SDKCONFIG=boards/sdkconfig.esp32cam -j
+    make deploy
+    
 # Push file to esp
     ampy --port /dev/tty.usbserial-A50285BI put boot.py
 
@@ -9,7 +17,13 @@
 # Direct shell
     miniterm.py /dev/tty.usbserial-A50285BI 115200 --dtr 0
 
-
+# Envs
+    export MICROPYTHON=$PWD
+    export PATH=$PATH:$MICROPYTHON/xtensa-esp32-elf/bin
+    export ESPIDF=$MICROPYTHON/esp-idf
+    export AMPY_PORT=/dev/tty.usbserial-A50285BI
+    
+    
 
 ## From Scratch
 
@@ -24,9 +38,6 @@
     
 ## Tool chain
     brew install gnu-sed gawk binutils gperftools gettext wget help2man libtool autoconf automake make
-
-# Erase flash
-    esptool.py --port /dev/tty.usbserial-A50285BI --baud 115200 erase_flash
 
 # Micropython environment
     virtualenv -p python3 venv
@@ -60,12 +71,6 @@
 # Make file change
     in micropython/ports/esp32/makefile - change in makefile on line 17 change PORT to /dev/tty.usbserial-A50285BI
 
-# Envs
-    export MICROPYTHON=$PWD
-    export PATH=$PATH:$MICROPYTHON/xtensa-esp32-elf/bin
-    export ESPIDF=$MICROPYTHON/esp-idf
-    export AMPY_PORT=/dev/tty.usbserial-A50285BI
-    
 # Make flash
     cd $MICROPYTHON/micropython/ports/esp32
     -- may need -- make clean
@@ -81,5 +86,3 @@
 ## Installation
     cd $MICROPYTHON/arduino-esp32/ports/esp32
     make deploy
-
-

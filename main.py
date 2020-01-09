@@ -1,20 +1,16 @@
 import camera
+import machine
 import ubinascii
 import usocket as socket
-
-import ulogging as logging
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(__name__)
-
 
 # Initialize socket connection
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind(('', 80))
 s.listen(1)
 
-# Check for incoming request
 while True:
   conn, addr = s.accept()
+  params = conn.recv(1024).decode()
 
   # Initialize camera
   camera.init()
@@ -24,7 +20,7 @@ while True:
 
   conn.send('HTTP/1.1 200 OK\n')
   conn.send('Content-Type: application/json\n\n')
-
+  
   # Convert to base64
   img = ubinascii.b2a_base64(data)
 
@@ -34,4 +30,15 @@ while True:
   # Deinitialize camera
   camera.deinit()
 
+  # Close connection
   conn.close()
+
+  # Put esp to sleep
+  sleep_mode(params)
+  
+
+def sleep_mode(params):
+  sleep_time = int(params.split("time-")[1])
+
+  if sleep_time:
+    machine.deepsleep(60000 * sleep_time-1)
