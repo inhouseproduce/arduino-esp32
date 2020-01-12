@@ -2,6 +2,7 @@ import camera
 import machine
 import ubinascii
 import usocket as socket
+import utime
 
 # Initialize socket connection
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -14,6 +15,9 @@ while True:
 
   # Initialize camera
   camera.init()
+
+  # delay 1 sec. lense to be ready
+  utime.sleep_us(1000)
 
   # capture Image
   data = camera.capture()
@@ -33,7 +37,7 @@ while True:
   # Close connection
   conn.close()
 
-  # Put esp to sleep
+  # # Put esp to sleep
   sleep_mode(params)
   
 
@@ -41,4 +45,4 @@ def sleep_mode(params):
   sleep_time = int(params.split("time-")[1])
 
   if sleep_time:
-    machine.deepsleep(60000 * sleep_time-1)
+    machine.deepsleep(60000 * (sleep_time-1))
