@@ -11,8 +11,18 @@ s.listen(1)
 
 while True:
   conn, addr = s.accept()
+
+  # socket timeout (seconds)
+  s.settimeout(15)
+
+  # Params
   params = conn.recv(1024).decode()
 
+  # Get object property by name (param is string)
+  def obj_props(arg):
+    data = params.split(arg)[1]
+    return (data.split(':'))[1].split(',')[0].split('}')[0]
+    
   # Initialize camera
   camera.init()
 
@@ -36,13 +46,10 @@ while True:
 
   # Close connection
   conn.close()
-
-  # # Put esp to sleep
-  sleep_mode(params)
   
+  # Get sleep time from params filter by obj_props
+  sleep_time = obj_props('sleep')
 
-def sleep_mode(params):
-  sleep_time = int(params.split("time-")[1])
-
+  # Put esp to sleep (miliseconds)
   if sleep_time:
-    machine.deepsleep(60000 * (sleep_time-1))
+    machine.deepsleep(60000 * int(sleep_time))

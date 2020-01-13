@@ -2,6 +2,12 @@
 
 # Erase flash
     esptool.py --port /dev/tty.usbserial-A50285BI --baud 115200 erase_flash
+
+# Envs
+    export MICROPYTHON=$PWD
+    export PATH=$PATH:$MICROPYTHON/xtensa-esp32-elf/bin
+    export ESPIDF=$MICROPYTHON/esp-idf
+    export AMPY_PORT=/dev/tty.usbserial-A50285BI
     
 # Flash esp32
     cd $MICROPYTHON/micropython/ports/esp32
@@ -16,17 +22,16 @@
 
 # Direct shell
     miniterm.py /dev/tty.usbserial-A50285BI 115200 --dtr 0
+    -- Press restart to boot
 
-# Envs
-    export MICROPYTHON=$PWD
-    export PATH=$PATH:$MICROPYTHON/xtensa-esp32-elf/bin
-    export ESPIDF=$MICROPYTHON/esp-idf
-    export AMPY_PORT=/dev/tty.usbserial-A50285BI
-    
-    
+# Install micropython local libary (upip)
+    -- write in the terminal (loads to local system /libs)
+    import upip
+    upip.install('ujson')
+
+
 
 ## From Scratch
-
 ## Tools
     pip install pyserial
     pip install pyparsing
@@ -86,3 +91,5 @@
 ## Installation
     cd $MICROPYTHON/arduino-esp32/ports/esp32
     make deploy
+
+
