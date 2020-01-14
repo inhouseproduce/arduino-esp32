@@ -34,3 +34,9 @@
     pip install adafruit-ampy
     brew install cmake ninja
     brew install ccache
+
+### Files
+    README.md: Informational document containing all updates
+    boot.py: Src code initializing pins and libraries to be run in main.py
+    main.py: Src code for getting and sending data received from running  commands from sht31.py
+    sht31.py: Python library code running and automating all data gathering in SHT31
