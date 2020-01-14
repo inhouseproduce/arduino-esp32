@@ -14,16 +14,11 @@
     ampy --port /dev/ttyUSB0 put sht31.py
 
 ### Run the file (Local)
-    ampy --port /dev/tty.usbserial-A50285BI run main.py
+    ampy --port /dev/ttyUSB0 run main.py
 
 ### Direct shell
-    miniterm.py /dev/tty.usbserial-A50285BI 115200 --dtr 0
+    miniterm.py /dev/ttyUSB0 115200 --dtr 0
     -- Press restart to boot
-
-### Install micropython local libary (upip)
-    -- write in the terminal (loads to local system /libs)
-    import upip
-    upip.install('ujson')
 
 ### From Scratch
 ### Tools
