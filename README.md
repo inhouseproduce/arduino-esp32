@@ -40,3 +40,4 @@
     boot.py: Src code initializing pins and libraries to be run in main.py
     main.py: Src code for getting and sending data received from running  commands from sht31.py
     sht31.py: Python library code running and automating all data gathering in SHT31
+    run.sh: sudo pip install all necessary tools for the code and debugging
