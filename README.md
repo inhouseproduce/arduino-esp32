@@ -35,4 +35,15 @@
     boot.py: Src code initializing pins and libraries to be run in main.py
     main.py: Src code for getting and sending data received from running  commands from sht31.py
     sht31.py: Python library code running and automating all data gathering in SHT31
-    run.sh: sudo pip install all necessary tools for the code and debugging
+    run.sh: pip installs all necessary tools for the code and debugging
+    Makefile: Simple makefile to run commands of above files and make everything easier
+
+### Makefile Commands
+    make: Runs put and then run on given PORT
+    make run: Runs main.py on given PORT
+    make put: Copies boot.py, main.py, and sht31.py to the ESP8266
+    make clean: Removes all files from ESP8266
+    make install: Runs run.sh
+    make flash: Runs erase_fl, then write_fl
+    make erase_fl: Erases and clears flash at PORT so it can be written again
+    make write_fl: Writes flash to PORT with given BINFILE
