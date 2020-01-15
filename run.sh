@@ -1,9 +1,9 @@
 #!/bin/bash
 
-sudo pip install pyserial
-sudo pip install pyparsing
-sudo pip install esptool
-sudo pip install virtualenv
-sudo pip install adafruit-ampy
-sudo brew install cmake ninja
-sudo brew install ccacheP
+pip install pyserial
+pip install pyparsing
+pip install esptool
+pip install virtualenv
+pip install adafruit-ampy
+brew install cmake ninja
+brew install ccacheP
