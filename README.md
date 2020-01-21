@@ -91,5 +91,3 @@
 ## Installation
     cd $MICROPYTHON/arduino-esp32/ports/esp32
     make deploy
-
-

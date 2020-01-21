@@ -12,44 +12,50 @@ s.listen(1)
 while True:
   conn, addr = s.accept()
 
-  # socket timeout (seconds)
-  s.settimeout(15)
-
   # Params
   params = conn.recv(1024).decode()
 
-  # Get object property by name (param is string)
+  # return object property by name (param is string)
   def obj_props(arg):
-    data = params.split(arg)[1]
-    return (data.split(':'))[1].split(',')[0].split('}')[0]
-    
-  # Initialize camera
-  camera.init()
-
-  # delay 1 sec. lense to be ready
-  utime.sleep_us(1000)
-
-  # capture Image
-  data = camera.capture()
+    data = params.split(arg)
+    if len(data) >= 2:
+      return (data[1].split(':'))[1].split(',')[0].split('}')[0]
+    else: 
+      return 'none'
 
   conn.send('HTTP/1.1 200 OK\n')
   conn.send('Content-Type: application/json\n\n')
+
+  if obj_props('scan') != 'none':
+    conn.send('true')
+
+  elif obj_props('capture') != 'none':
+    # Initialize camera
+    camera.init()
+
+    # delay 1 sec. lense to be ready
+    utime.sleep_us(1000)
+
+    # capture Image
+    data = camera.capture()
+
+    conn.send('HTTP/1.1 200 OK\n')
+    conn.send('Content-Type: application/json\n\n')
+    
+    # Convert to base64
+    img = ubinascii.b2a_base64(data)
+
+    # Send Image back
+    conn.send(img)
   
-  # Convert to base64
-  img = ubinascii.b2a_base64(data)
+    # Deinitialize camera
+    camera.deinit()
 
-  # Send Image back
-  conn.send(img)
-
-  # Deinitialize camera
-  camera.deinit()
 
   # Close connection
   conn.close()
-  
-  # Get sleep time from params filter by obj_props
-  sleep_time = obj_props('sleep')
+
 
   # Put esp to sleep (miliseconds)
-  if sleep_time:
-    machine.deepsleep(60000 * int(sleep_time))
+  # if sleep_time:
+  #   machine.deepsleep(60000 * int(sleep_time))
