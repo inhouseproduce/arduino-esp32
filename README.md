@@ -138,3 +138,5 @@
     Log file will no longer be a part of this project
     Initializer list must be reallocated to the boot.py file
     All loop sequences are in main.py
+
+See release for latest files
