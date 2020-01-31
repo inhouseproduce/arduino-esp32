@@ -1,5 +1,12 @@
 ## Development
 
+## Quick start
+    dependencies --> python3 setup.sh
+    build software --> python3 build.sh
+    make file --> python3 make.sh -> change makefile
+    flash esp --> python3 flash_esp.sh
+    ampy --port /dev/tty.usbserial-A50285BI put boot.py
+
 # Erase flash
     esptool.py --port /dev/tty.usbserial-A50285BI --baud 115200 erase_flash
 

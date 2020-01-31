@@ -39,9 +39,6 @@ while True:
     # capture Image
     data = camera.capture()
 
-    conn.send('HTTP/1.1 200 OK\n')
-    conn.send('Content-Type: application/json\n\n')
-    
     # Convert to base64
     img = ubinascii.b2a_base64(data)
 
@@ -56,6 +53,7 @@ while True:
   conn.close()
 
 
-  # Put esp to sleep (miliseconds)
+  #Put esp to sleep (miliseconds)
+  # sleep_time = obj_props('sleep')
   # if sleep_time:
-  #   machine.deepsleep(60000 * int(sleep_time))
+  #   machine.deepsleep(60000 * int(sleep_time) -1)
